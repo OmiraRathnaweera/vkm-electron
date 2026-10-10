@@ -1,0 +1,37 @@
+<!-- Page: Settings & backup. Fully static markup; app.js fills values and wires the buttons. -->
+<div class="page">
+  <div class="page-head"><h1>Settings &amp; backup</h1></div>
+
+  <section class="panel">
+    <h2>Business</h2>
+    <p>Shown in the sidebar and at the top of printed pages.</p>
+    <div class="form-row">
+      <label>Business name
+        <input type="text" class="field w-name" maxlength="80" data-slot="business-name" />
+      </label>
+      <label>Currency label
+        <input type="text" class="field w-cur" maxlength="8" data-slot="currency" />
+      </label>
+      <button type="button" class="btn primary" data-slot="save-settings">Save</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Backup &amp; restore</h2>
+    <p>
+      Your data lives only on this computer. Save a backup copy to a USB drive or cloud folder
+      regularly. The app also keeps a daily snapshot of the last 30 days automatically.
+    </p>
+    <div class="btn-row">
+      <button type="button" class="btn" data-slot="backup-export">Save backup copy…</button>
+      <button type="button" class="btn" data-slot="backup-import">Restore from backup…</button>
+      <button type="button" class="btn" data-slot="open-folder">Open data folder</button>
+    </div>
+    <code class="path" data-slot="data-path"></code>
+  </section>
+
+  <section class="panel">
+    <h2>About</h2>
+    <p class="no-margin" data-slot="about-text"></p>
+  </section>
+</div>

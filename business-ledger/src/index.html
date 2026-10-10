@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Business Ledger</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!--
+    This file is only the page shell. The real markup lives in:
+      Components/  reusable pieces (sidebar, toast, summary-card, chart-card, empty-state)
+      Pages/       one file per screen (ledger, reports, settings)
+    They are loaded at start-up by loader.js (see main.js "ui:fragments").
+  -->
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <main class="main">
+      <div id="view"></div>
+    </main>
+  </div>
+  <div id="toast-mount"></div>
+
+  <script src="../node_modules/chart.js/dist/chart.umd.js"></script>
+  <script src="logic.js"></script>
+  <script src="loader.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
