@@ -169,7 +169,7 @@
         : null,
       h('div', { class: 'spacer' }),
       m ? h('button', { class: 'btn', onclick: () => exportCSV(key) }, 'Export CSV') : null,
-      m ? h('button', { class: 'btn', onclick: () => window.print() }, 'Print / PDF') : null,
+      m ? h('button', { class: 'btn', title: 'Download as PDF', onclick: () => downloadPDF('ledger-' + key + '.pdf') }, 'Download') : null,
       m ? h('button', { class: 'btn danger', onclick: () => deleteMonth(key) }, 'Delete month') : null,
     ].filter(Boolean));
 
@@ -339,8 +339,6 @@
           }, sug.from ? 'Use balance carried from ' + L.monthLabel(sug.from) : 'Reset to 0.00'));
       } else if (c.carriedFrom) {
         ui.openNote.append('(carried forward from ' + L.monthLabel(c.carriedFrom) + ' — edit to override)');
-      } else {
-        ui.openNote.append('(enter your starting balance here, if any)');
       }
     }
 
@@ -447,6 +445,14 @@
     if (res && res.ok) toast('Saved: ' + res.path);
   }
 
+  async function downloadPDF(suggestedName) {
+    const res = await api.savePdfFile({
+      suggestedName: suggestedName || 'ledger.pdf',
+    });
+    if (res && res.ok) toast('Saved: ' + res.path);
+    else if (res && res.error) toast('Could not save PDF: ' + res.error);
+  }
+
   function deleteMonth(key) {
     const m = state.data.months[key];
     const n = m.rows.length;
@@ -528,7 +534,11 @@
         },
       }, rs.period === 'week' ? 'This week' : rs.period === 'month' ? 'This month' : 'This year'),
       h('div', { class: 'spacer' }),
-      h('button', { class: 'btn', onclick: () => window.print() }, 'Print / PDF'));
+      h('button', {
+        class: 'btn',
+        title: 'Download as PDF',
+        onclick: () => downloadPDF('report-' + rs.period + '-' + anchor + '.pdf'),
+      }, 'Download'));
 
     /* totals (Components/summary-card.html) */
     const t = rep.totals;

@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   exportBackup: () => ipcRenderer.invoke('backup:export'),
   importBackup: () => ipcRenderer.invoke('backup:import'),
   saveTextFile: (opts) => ipcRenderer.invoke('file:save-text', opts),
+  savePdfFile: (opts) => ipcRenderer.invoke('file:save-pdf', opts),
   loadFragments: () => ipcRenderer.invoke('ui:fragments'),
   appInfo: () => ipcRenderer.invoke('app:info'),
   openDataFolder: () => ipcRenderer.invoke('app:open-data-folder'),

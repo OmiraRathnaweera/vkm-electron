@@ -18,8 +18,8 @@ calculations and charts. It is built for a single user on a single computer and
   - bar chart of receipts vs payments (per day, or per month for a year)
   - line chart of the balance over time
   - pie charts: receipts vs payments, payments by description, receipts by description
-- **Export / print** – export any month to **CSV** (opens in Excel) or
-  **Print / Save as PDF**.
+- **Export / download** – export any month to **CSV** (opens in Excel) or
+  **Download as PDF**.
 - **Safe storage** – data is saved automatically as you type, in a local file.
   Daily automatic backups (last 30 days) plus manual **Save backup / Restore**.
 - Light & dark theme (follows the operating system).

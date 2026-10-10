@@ -137,6 +137,29 @@ function registerIpc() {
     return { ok: true, path: filePath };
   });
 
+  /* Generate and save PDF of the current view. */
+  ipcMain.handle('file:save-pdf', async (_e, { suggestedName }) => {
+    if (!mainWindow) return { ok: false };
+    try {
+      const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+        title: 'Download PDF',
+        defaultPath: String(suggestedName || 'ledger.pdf'),
+        filters: [{ name: 'PDF Document', extensions: ['pdf'] }],
+      });
+      if (canceled || !filePath) return { ok: false };
+
+      const data = await mainWindow.webContents.printToPDF({
+        printBackground: true,
+        pageSize: 'A4',
+      });
+      fs.writeFileSync(filePath, data);
+      return { ok: true, path: filePath };
+    } catch (err) {
+      console.error('Failed to save PDF:', err);
+      return { ok: false, error: err.message };
+    }
+  });
+
   /* HTML pieces of the UI: src/Components/*.html and src/Pages/*.html.
      Fixed folder list, no user-supplied paths. */
   ipcMain.handle('ui:fragments', () => {
