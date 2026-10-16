@@ -1,3 +1,38 @@
+/* Bundled Sinhala font (SIL Open Font License, see fonts/LICENSE-NotoSansSinhala-OFL.txt).
+   Loaded from disk, so it works fully offline. */
+@font-face {
+  font-family: "Noto Sans Sinhala";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/noto-sans-sinhala-sinhala-400-normal.woff2") format("woff2");
+  /* Sinhala letters only; Latin text keeps using the normal system font. */
+  unicode-range:
+    U+0964-0965, U+0D81-0DF4, U+1CF2, U+200C-200D, U+25CC, U+111E1-111F4;
+}
+
+@font-face {
+  font-family: "Noto Sans Sinhala";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/noto-sans-sinhala-sinhala-600-normal.woff2") format("woff2");
+  /* Sinhala letters only; Latin text keeps using the normal system font. */
+  unicode-range:
+    U+0964-0965, U+0D81-0DF4, U+1CF2, U+200C-200D, U+25CC, U+111E1-111F4;
+}
+
+@font-face {
+  font-family: "Noto Sans Sinhala";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/noto-sans-sinhala-sinhala-700-normal.woff2") format("woff2");
+  /* Sinhala letters only; Latin text keeps using the normal system font. */
+  unicode-range:
+    U+0964-0965, U+0D81-0DF4, U+1CF2, U+200C-200D, U+25CC, U+111E1-111F4;
+}
+
 :root {
   --bg: #f6f7f9;
   --surface: #ffffff;
@@ -49,7 +84,16 @@ body {
 body {
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font:
+    14px/1.45 "Noto Sans Sinhala",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    "Nirmala UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
 }
 
 button,
@@ -81,7 +125,6 @@ select {
   gap: 10px;
   padding: 4px 6px 20px;
 }
-
 .brand-mark {
   width: 36px;
   height: 36px;
@@ -94,13 +137,11 @@ select {
   font-size: 17px;
   flex: none;
 }
-
 .brand-name {
   font-weight: 650;
   line-height: 1.2;
   word-break: break-word;
 }
-
 .brand-sub {
   font-size: 12px;
   color: var(--muted);
@@ -111,7 +152,6 @@ select {
   flex-direction: column;
   gap: 4px;
 }
-
 .nav-btn {
   display: flex;
   align-items: center;
@@ -124,18 +164,15 @@ select {
   cursor: pointer;
   color: var(--muted);
 }
-
 .nav-btn:hover {
   background: var(--surface-2);
   color: var(--text);
 }
-
 .nav-btn.active {
   background: var(--surface-2);
   color: var(--text);
   font-weight: 600;
 }
-
 .nav-ico {
   width: 18px;
   text-align: center;
@@ -147,7 +184,6 @@ select {
   color: var(--muted);
   padding: 6px;
 }
-
 .save-state.error {
   color: var(--danger);
   font-weight: 600;
@@ -160,7 +196,6 @@ select {
   overflow-y: auto;
   padding: 24px 28px 48px;
 }
-
 .page {
   max-width: 1180px;
   margin: 0 auto;
@@ -173,13 +208,11 @@ select {
   gap: 12px;
   margin-bottom: 18px;
 }
-
 .page-head h1 {
   margin: 0;
   font-size: 22px;
   letter-spacing: -0.01em;
 }
-
 .spacer {
   flex: 1;
 }
@@ -200,11 +233,9 @@ select {
   cursor: pointer;
   white-space: nowrap;
 }
-
 .btn:hover {
   background: var(--surface-2);
 }
-
 .btn:focus-visible,
 input:focus-visible,
 select:focus-visible {
@@ -212,27 +243,22 @@ select:focus-visible {
   box-shadow: 0 0 0 3px var(--focus);
   border-color: var(--accent);
 }
-
 .btn.primary {
   background: var(--accent);
   color: var(--accent-ink);
   border-color: var(--accent);
   font-weight: 600;
 }
-
 .btn.primary:hover {
   filter: brightness(1.08);
 }
-
 .btn.danger {
   color: var(--danger);
 }
-
 .btn.small {
   padding: 4px 9px;
   font-size: 12px;
 }
-
 .btn.icon {
   padding: 7px 10px;
 }
@@ -254,7 +280,6 @@ input.field {
   overflow: hidden;
   background: var(--surface);
 }
-
 .segmented button {
   border: 0;
   background: transparent;
@@ -262,11 +287,9 @@ input.field {
   cursor: pointer;
   color: var(--muted);
 }
-
-.segmented button+button {
+.segmented button + button {
   border-left: 1px solid var(--border);
 }
-
 .segmented button.active {
   background: var(--accent);
   color: var(--accent-ink);
@@ -288,7 +311,6 @@ input.field {
   gap: 12px;
   margin-bottom: 18px;
 }
-
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -296,35 +318,35 @@ input.field {
   padding: 14px 16px;
   box-shadow: var(--shadow);
 }
-
 .card .label {
   font-size: 12px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-
 .card .value {
   font-size: 22px;
   font-weight: 650;
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
-
 .card .hint {
   font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
 }
-
+.cards.cols-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.chart-tools {
+  margin: -2px 0 10px;
+}
 .card.receipts .value {
   color: var(--receipt);
 }
-
 .card.payments .value {
   color: var(--payment);
 }
-
 .value.neg {
   color: var(--danger) !important;
 }
@@ -343,14 +365,12 @@ table.ledger {
   border-collapse: collapse;
   table-layout: fixed;
 }
-
 .ledger th,
 .ledger td {
   padding: 0;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
-
 .ledger thead th {
   background: var(--surface-2);
   text-align: left;
@@ -361,22 +381,21 @@ table.ledger {
   color: var(--muted);
   padding: 10px 12px;
 }
-
 .ledger th.num,
 .ledger td.num {
   text-align: right;
 }
-
 .ledger col.c-date {
   width: 150px;
 }
-
+.ledger col.c-cat {
+  width: 120px;
+}
 .ledger col.c-receipt,
 .ledger col.c-payment,
 .ledger col.c-balance {
   width: 150px;
 }
-
 .ledger col.c-act {
   width: 44px;
 }
@@ -389,24 +408,35 @@ table.ledger {
   border-radius: 0;
   font-variant-numeric: tabular-nums;
 }
-
+.ledger td select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 10px 8px;
+  border-radius: 0;
+  cursor: pointer;
+}
+.ledger td select:focus {
+  outline: none;
+  background: var(--focus);
+}
+.ledger td select option {
+  background: var(--surface);
+  color: var(--text);
+}
 .ledger td input.num {
   text-align: right;
 }
-
 .ledger td input:focus {
   outline: none;
   background: var(--focus);
 }
-
 .ledger td input.invalid {
   background: rgba(192, 57, 43, 0.18);
 }
-
 .ledger td.receipt input {
   color: var(--receipt);
 }
-
 .ledger td.payment input {
   color: var(--payment);
 }
@@ -417,7 +447,6 @@ table.ledger {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-
 .ledger td.bal.neg,
 .ledger td .neg {
   color: var(--danger);
@@ -426,16 +455,13 @@ table.ledger {
 .ledger tr.opening td {
   background: var(--surface-2);
 }
-
 .ledger tr.opening .desc-cell {
   padding: 8px 12px;
   color: var(--muted);
 }
-
 .ledger tr.opening .desc-cell strong {
   color: var(--text);
 }
-
 .ledger tr.opening td.bal-input input {
   font-weight: 600;
 }
@@ -447,15 +473,12 @@ table.ledger {
   border-bottom: 0;
   font-variant-numeric: tabular-nums;
 }
-
 .ledger tfoot td.num {
   text-align: right;
 }
-
 .ledger tfoot .tot-receipt {
   color: var(--receipt);
 }
-
 .ledger tfoot .tot-payment {
   color: var(--payment);
 }
@@ -469,7 +492,6 @@ table.ledger {
   padding: 10px 0;
   font-size: 16px;
 }
-
 .row-del:hover {
   color: var(--danger);
 }
@@ -494,11 +516,9 @@ table.ledger {
   padding: 48px 24px;
   text-align: center;
 }
-
 .empty-state h2 {
   margin: 0 0 6px;
 }
-
 .empty-state p {
   color: var(--muted);
   margin: 0 0 18px;
@@ -516,7 +536,6 @@ table.ledger {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
-
 .chart-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -524,25 +543,28 @@ table.ledger {
   padding: 14px 16px 16px;
   box-shadow: var(--shadow);
 }
-
 .chart-card.wide {
   grid-column: 1 / -1;
 }
-
 .chart-card h3 {
   margin: 0 0 10px;
   font-size: 14px;
 }
-
 .chart-box {
   position: relative;
   height: 280px;
 }
-
 .chart-card.wide .chart-box {
   height: 320px;
 }
-
+.chart-snapshot {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+}
 .chart-empty {
   position: absolute;
   inset: 0;
@@ -561,24 +583,20 @@ table.ledger {
   margin-bottom: 14px;
   max-width: 720px;
 }
-
 .panel h2 {
   margin: 0 0 4px;
   font-size: 16px;
 }
-
 .panel p {
   margin: 0 0 14px;
   color: var(--muted);
 }
-
 .form-row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: end;
 }
-
 .form-row label {
   display: flex;
   flex-direction: column;
@@ -586,29 +604,23 @@ table.ledger {
   font-size: 12px;
   color: var(--muted);
 }
-
 .w-name {
   width: 280px;
 }
-
 .w-cur {
   width: 90px;
 }
-
 .w-year {
   width: 96px;
 }
-
 .no-margin {
   margin: 0 !important;
 }
-
 .btn-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-
 code.path {
   display: block;
   margin-top: 8px;
@@ -634,10 +646,13 @@ code.path {
 }
 
 @media (max-width: 1100px) {
-  .cards {
+  .cards,
+  .cards.cols-5 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
+  .cards.cols-5 .card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  } /* odd one out spans the row */
   .charts {
     grid-template-columns: 1fr;
   }
@@ -657,7 +672,6 @@ code.path {
     --danger: #a01f12;
     color-scheme: light;
   }
-
   .sidebar,
   .toolbar,
   .table-actions,
@@ -666,47 +680,132 @@ code.path {
   .toast {
     display: none !important;
   }
-
+  html,
+  body {
+    height: auto;
+  }
   .app {
     display: block;
     height: auto;
   }
-
+  .print-only h1 {
+    margin: 0 0 12px;
+  }
   .main {
     overflow: visible;
     padding: 0;
   }
-
   .print-only {
     display: block;
   }
-
   .page-head .no-print {
     display: none !important;
   }
-
   .card,
   .table-wrap,
   .chart-card {
     box-shadow: none;
     break-inside: avoid;
   }
-
   .ledger td input {
     padding: 6px 8px;
     color: inherit !important;
   }
+  .ledger td select {
+    padding: 6px 4px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  /* Multi-page tables: let the table split across A4 pages, repeat the column headings on each
+     page, keep every row whole, and show the totals row only once, at the very end. */
+  .table-wrap {
+    break-inside: auto;
+    overflow: visible;
+  }
+  .ledger thead {
+    display: table-header-group;
+  }
+  .ledger tfoot {
+    display: table-row-group;
+  }
+  .ledger tr {
+    break-inside: avoid;
+  }
+  .ledger tfoot tr {
+    break-before: avoid;
+  }
+  /* Reports page on A4: compact cards (3 per row) and shorter charts so more fits on each page. */
+  .cards.cols-5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .cards.cols-5 .card:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+  .card {
+    padding: 10px 12px;
+  }
+  .card .value {
+    font-size: 18px;
+  }
+  .charts {
+    gap: 10px;
+  }
+  .chart-card {
+    padding: 10px 12px 12px;
+  }
+  .chart-box,
+  .chart-card.wide .chart-box {
+    height: 200px;
+  }
 
+  /* Portrait A4: narrower columns so the Description column keeps most of the width. */
+  .ledger col.c-date {
+    width: 86px;
+  }
+  .ledger col.c-cat {
+    width: 74px;
+  }
+  .ledger col.c-receipt,
+  .ledger col.c-payment,
+  .ledger col.c-balance {
+    width: 104px;
+  }
+  .ledger {
+    font-size: 12px;
+  }
+  .ledger thead th {
+    padding: 8px 6px;
+    font-size: 10px;
+  }
+  .ledger td input,
+  .ledger td select {
+    font-size: 12px;
+    padding: 6px 4px;
+  }
+  .ledger td.bal,
+  .ledger tfoot td {
+    padding: 6px 6px;
+    font-size: 12px;
+  }
+  .ledger tr.opening .desc-cell {
+    padding: 6px 6px;
+  }
+  .ledger td input::placeholder {
+    color: transparent;
+  }
+  .ledger input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none;
+  }
   .ledger col.c-act,
   .ledger th.act,
   .ledger td.act {
     display: none;
   }
-
   .ledger td.receipt input {
     color: var(--receipt) !important;
   }
-
   .ledger td.payment input {
     color: var(--payment) !important;
   }

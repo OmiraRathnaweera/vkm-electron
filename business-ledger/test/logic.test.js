@@ -200,8 +200,8 @@ test('CSV export', () => {
   const d = sample();
   d.months['2026-10'].rows[0].desc = 'Paper, "A4"';
   const lines = L.monthToCSV(d, '2026-10').trim().split('\r\n');
-  assert.equal(lines[0], 'Date,Description,Receipts,Payments,Balance');
-  assert.equal(lines[1], ',Opening balance,,,4750.50');
-  assert.equal(lines[2], '2026-10-01,"Paper, ""A4""",,400.25,4350.25');
-  assert.equal(lines[lines.length - 1], ',TOTAL,1200.00,500.00,5450.50');
+  assert.equal(lines[0], 'Date,Description,Category,Receipts,Payments,Balance');
+  assert.equal(lines[1], ',Opening balance,,,,4750.50');
+  assert.equal(lines[2], '2026-10-01,"Paper, ""A4""",Others,,400.25,4350.25');
+  assert.equal(lines[lines.length - 1], ',TOTAL,,1200.00,500.00,5450.50');
 });
