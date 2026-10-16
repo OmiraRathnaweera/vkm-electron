@@ -42,7 +42,7 @@
   ];
   const DEFAULT_CATEGORY = "Others";
   const isValidCategory = (c) => CATEGORIES.indexOf(c) !== -1;
-  /* Reports page: Fuel gets its own "expenditure" figure; the pie chart covers these six. */
+  /* Reports page: Fuel gets its own "expenditure" figure; the category charts (pie and bar) cover these six. */
   const FUEL_CATEGORY = "Fuel";
   const REPORT_CATEGORIES = ["ABC", "Chips", "Mix", "3/4", "Dust", "6*9"];
 

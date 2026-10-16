@@ -1089,6 +1089,48 @@
       return el;
     }
 
+    /* Bar chart for category income. */
+    function categoryBarChart(title, names, values, colors, wide) {
+      const { el, canvas, box } = chartCard(title, wide);
+      if (!values.some((v) => v > 0)) {
+        emptyNote(box);
+        return el;
+      }
+      state.charts.push(
+        new window.Chart(canvas, {
+          type: "bar",
+          data: {
+            labels: names,
+            datasets: [
+              {
+                label: "Income",
+                data: values.map((c) => c / 100),
+                backgroundColor: colors,
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (c) => c.dataset.label + ":" + tipMoney(c.parsed.y),
+                },
+              },
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { callback: axisMoney } },
+              x: { grid: { display: false } },
+            },
+          },
+        }),
+      );
+      return el;
+    }
+
     /* 2. pie: received vs payments */
     pieChart(
       "Received vs payments",
@@ -1097,41 +1139,26 @@
       [cssVar("--receipt"), cssVar("--payment")],
     );
 
-    /* 3. pie: ABC, Chips, Mix, 3/4, Dust, 6*9 - by received or by payments amount */
-    const basis = rs.catBasis === "payments" ? "payments" : "receipts";
-    const catCard = pieChart(
-      "Categories — " + (basis === "receipts" ? "receipts" : "payments"),
+    /* 3. Category income (ABC, Chips, Mix, 3/4, Dust, 6*9) */
+    const catIncomeValues = L.REPORT_CATEGORIES.map(
+      (c) => rep.byCategory[c].receipts,
+    );
+
+    /* 3a. pie: Income by category */
+    pieChart(
+      "Income by category",
       L.REPORT_CATEGORIES,
-      L.REPORT_CATEGORIES.map((c) => rep.byCategory[c][basis]),
+      catIncomeValues,
       SOURCE_COLORS.slice(0, 6),
     );
-    const basisBtn = (value, label) =>
-      h(
-        "button",
-        {
-          class: basis === value ? "active" : "",
-          onclick: () => {
-            rs.catBasis = value;
-            renderReports();
-          },
-        },
-        label,
-      );
-    slot(catCard, "title").after(
-      h(
-        "div",
-        { class: "chart-tools no-print" },
-        h(
-          "div",
-          {
-            class: "segmented",
-            role: "group",
-            "aria-label": "Show categories by",
-          },
-          basisBtn("receipts", "Receipts"),
-          basisBtn("payments", "Payments"),
-        ),
-      ),
+
+    /* 3b. bar: Income by category */
+    categoryBarChart(
+      "Income by category",
+      L.REPORT_CATEGORIES,
+      catIncomeValues,
+      SOURCE_COLORS.slice(0, 6),
+      true,
     );
   }
 
