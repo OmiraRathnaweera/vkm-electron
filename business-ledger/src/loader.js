@@ -6,7 +6,7 @@
  *   const el = Fragments.create('Pages/ledger');   // new element every call
  */
 (function () {
-  'use strict';
+  "use strict";
 
   const cache = {};
 
@@ -16,8 +16,9 @@
 
   function create(name) {
     const html = cache[name];
-    if (typeof html !== 'string') throw new Error('Missing UI fragment: ' + name);
-    const tpl = document.createElement('template');
+    if (typeof html !== "string")
+      throw new Error("Missing UI fragment: " + name);
+    const tpl = document.createElement("template");
     tpl.innerHTML = html.trim(); // static app files only - never user data
     return tpl.content.firstElementChild;
   }
