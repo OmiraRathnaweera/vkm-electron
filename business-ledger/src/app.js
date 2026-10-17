@@ -4,12 +4,14 @@
 
   const L = window.Logic;
   const api = window.api;
+  const Crud = window.Crud;
 
   const state = {
     data: null,
     computed: null,
     view: "ledger",
     month: L.monthKeyOf(L.todayISO()),
+    salesMonth: L.monthKeyOf(L.todayISO()),
     report: {
       period: "month",
       week: L.todayISO(),
@@ -82,7 +84,7 @@
         setSaveState("⚠ NOT saved", true);
         toast(
           "Could not save your data: " +
-            (err && err.message ? err.message : err),
+          (err && err.message ? err.message : err),
         );
       });
   }
@@ -205,45 +207,45 @@
         ),
         existing.length
           ? h(
-              "select",
-              {
-                class: "field",
-                "aria-label": "Jump to a saved month",
-                onchange: (e) => {
-                  if (e.target.value) {
-                    state.month = e.target.value;
-                    renderLedger();
-                  }
-                },
+            "select",
+            {
+              class: "field",
+              "aria-label": "Jump to a saved month",
+              onchange: (e) => {
+                if (e.target.value) {
+                  state.month = e.target.value;
+                  renderLedger();
+                }
               },
-              h("option", { value: "" }, "Jump to saved month…"),
-              existing.map((k) => h("option", { value: k }, L.monthLabel(k))),
-            )
+            },
+            h("option", { value: "" }, "Jump to saved month…"),
+            existing.map((k) => h("option", { value: k }, L.monthLabel(k))),
+          )
           : null,
         h("div", { class: "spacer" }),
         m
           ? h(
-              "button",
-              { class: "btn", onclick: () => exportCSV(key) },
-              "Export CSV",
-            )
+            "button",
+            { class: "btn", onclick: () => exportCSV(key) },
+            "Export CSV",
+          )
           : null,
         m
           ? h(
-              "button",
-              {
-                class: "btn",
-                onclick: () => downloadPDF("ledger-" + key + ".pdf", false),
-              },
-              "Download",
-            )
+            "button",
+            {
+              class: "btn",
+              onclick: () => downloadPDF("ledger-" + key + ".pdf", false),
+            },
+            "Download",
+          )
           : null,
         m
           ? h(
-              "button",
-              { class: "btn danger", onclick: () => deleteMonth(key) },
-              "Delete month",
-            )
+            "button",
+            { class: "btn danger", onclick: () => deleteMonth(key) },
+            "Delete month",
+          )
           : null,
       ].filter(Boolean),
     );
@@ -257,10 +259,10 @@
           "No table for " + L.monthLabel(key) + " yet",
           sug.from
             ? "It will start with an opening balance of " +
-                money(sug.cents) +
-                ", carried forward from " +
-                L.monthLabel(sug.from) +
-                "."
+            money(sug.cents) +
+            ", carried forward from " +
+            L.monthLabel(sug.from) +
+            "."
             : "This will be your first month. You can enter an opening balance after creating it.",
           h(
             "button",
@@ -436,7 +438,7 @@
         "div",
         { class: "note no-print" },
         "Tip: press Enter to move to the next cell; Enter in the last cell of the last row adds a new row. " +
-          "Balances update automatically and everything is saved as you type.",
+        "Balances update automatically and everything is saved as you type.",
       ),
     );
 
@@ -590,8 +592,8 @@
       } else if (c.carriedFrom) {
         ui.openNote.append(
           "(carried forward from " +
-            L.monthLabel(c.carriedFrom) +
-            " — edit to override)",
+          L.monthLabel(c.carriedFrom) +
+          " — edit to override)",
         );
       }
     }
@@ -651,10 +653,10 @@
         hasContent &&
         !window.confirm(
           "Delete this row?\n\n" +
-            (row.desc || "(no description)") +
-            "\n" +
-            (row.receipt ? "Receipt: " + fmt(row.receipt) + "\n" : "") +
-            (row.payment ? "Payment: " + fmt(row.payment) : ""),
+          (row.desc || "(no description)") +
+          "\n" +
+          (row.receipt ? "Receipt: " + fmt(row.receipt) + "\n" : "") +
+          (row.payment ? "Payment: " + fmt(row.payment) : ""),
         )
       )
         return;
@@ -720,7 +722,7 @@
         cv.parentNode.insertBefore(img, cv);
         swapped.push([cv, img]);
       });
-      await Promise.all(swapped.map(([, img]) => img.decode().catch(() => {})));
+      await Promise.all(swapped.map(([, img]) => img.decode().catch(() => { })));
 
       const res = await api.savePdf({
         suggestedName: fileName,
@@ -754,19 +756,283 @@
     const n = m.rows.length;
     const ok = window.confirm(
       "Delete the whole table for " +
-        L.monthLabel(key) +
-        "?\n\n" +
-        n +
-        " entr" +
-        (n === 1 ? "y" : "ies") +
-        " will be removed. This cannot be undone " +
-        "(unless you restore a backup).",
+      L.monthLabel(key) +
+      "?\n\n" +
+      n +
+      " entr" +
+      (n === 1 ? "y" : "ies") +
+      " will be removed. This cannot be undone " +
+      "(unless you restore a backup).",
     );
     if (!ok) return;
     Crud.deleteMonth(state.data, key); // src/crud/delete/deleteMonth.js
     recompute();
     persist();
     renderLedger();
+  }
+
+  /* -------------------------------------------------------- stone sales */
+
+  /** Month navigation + action buttons for a monthly table page (used by the sales page). */
+  function buildMonthToolbar(o) {
+    const key = o.key;
+    return [
+      h('button', {
+        class: 'btn icon', title: 'Previous month', 'aria-label': 'Previous month',
+        onclick: () => o.onMonth(L.addMonths(key, -1)),
+      }, '◀'),
+      h('input', {
+        type: 'month', class: 'field', value: key, 'aria-label': 'Month',
+        onchange: (e) => { if (L.isValidMonthKey(e.target.value)) o.onMonth(e.target.value); },
+      }),
+      h('button', {
+        class: 'btn icon', title: 'Next month', 'aria-label': 'Next month',
+        onclick: () => o.onMonth(L.addMonths(key, 1)),
+      }, '▶'),
+      h('button', { class: 'btn', onclick: () => o.onMonth(L.monthKeyOf(L.todayISO())) }, 'This month'),
+      o.months.length
+        ? h('select', {
+          class: 'field', 'aria-label': 'Jump to a saved month',
+          onchange: (e) => { if (e.target.value) o.onMonth(e.target.value); },
+        },
+          h('option', { value: '' }, 'Jump to saved month…'),
+          o.months.map((k) => h('option', { value: k }, L.monthLabel(k))))
+        : null,
+      h('div', { class: 'spacer' }),
+      o.hasMonth ? h('button', { class: 'btn', onclick: o.onExport }, 'Export CSV') : null,
+      o.hasMonth ? h('button', { class: 'btn', onclick: o.onDownload }, 'Download') : null,
+      o.hasMonth ? h('button', { class: 'btn danger', onclick: o.onDelete }, 'Delete month') : null,
+    ].filter(Boolean);
+  }
+
+  function renderSales() {
+    const root = $('#view');
+    root.replaceChildren();
+    const key = state.salesMonth;
+    const m = state.data.sales[key];
+    const page = Fragments.create('Pages/sales'); // src/Pages/sales.html
+    root.append(page);
+
+    slot(page, 'print-title').textContent =
+      state.data.settings.businessName + ' — Daily stone sales — ' + L.monthLabel(key);
+
+    slot(page, 'toolbar').append(...buildMonthToolbar({
+      key,
+      months: Crud.listSalesMonths(state.data),                     // src/crud/read/listSalesMonths.js
+      hasMonth: !!m,
+      onMonth: (k) => { state.salesMonth = k; renderSales(); },
+      onExport: () => exportSalesCSV(key),
+      onDownload: () => downloadPDF('sales-' + key + '.pdf', true),  // 14 columns: landscape A4
+      onDelete: () => deleteSalesMonth(key),
+    }));
+
+    const content = slot(page, 'content');
+    if (!m) {
+      content.append(emptyState(
+        'No sales table for ' + L.monthLabel(key) + ' yet',
+        'Create a table to record the daily stone sales (cubes and price) for this month.',
+        h('button', {
+          class: 'btn primary',
+          onclick: () => {
+            const res = Crud.addSalesMonth(state.data, key);        // src/crud/create/addSalesMonth.js
+            if (!res.ok) return toast(res.error);
+            persist();
+            renderSales();
+          },
+        }, 'Create sales table for ' + L.monthLabel(key))));
+      return;
+    }
+    buildSalesTable(content, key, m);
+  }
+
+  function buildSalesTable(content, key, m) {
+    const stones = L.SALES_STONES;
+    const lastDay = key + '-' + String(L.daysInMonth(key)).padStart(2, '0');
+    const alt = (i) => (i % 2 ? ' grp-alt' : '');          // every second stone is shaded, as on paper
+    const footCell = {};                                     // 'ABC.cubes' -> total <td>
+
+    /* header: stone names across two columns each, then Cubes | Price */
+    const head1 = h('tr', {}, h('th', { rowSpan: 2, class: 's-sticky' }, 'Date'));
+    const head2 = h('tr', {});
+    stones.forEach((s, i) => {
+      head1.append(h('th', { colSpan: 2, class: 'grp grp-start' + alt(i) }, s));
+      head2.append(
+        h('th', { class: 'num sub grp-start' + alt(i) }, 'Cubes'),
+        h('th', { class: 'num sub' + alt(i) }, 'Price'));
+    });
+    head1.append(
+      h('th', { rowSpan: 2, class: 'num grp-start' }, 'Daily total sales' + (cur() ? ' (' + cur() + ')' : '')),
+      h('th', { rowSpan: 2, class: 'act' }));
+
+    /* footer: totals per stone, then the overall total sales */
+    const foot = h('tr', {}, h('td', { class: 's-sticky' }, 'Total'));
+    stones.forEach((s, i) => {
+      ['cubes', 'price'].forEach((part) => {
+        const td = h('td', { class: 'num' + (part === 'cubes' ? ' grp-start' : '') + alt(i) });
+        footCell[s + '.' + part] = td;
+        foot.append(td);
+      });
+    });
+    const grandTotal = h('td', { class: 'num grand grp-start' });
+    foot.append(grandTotal, h('td', { class: 'act' }));
+
+    const colgroup = h('colgroup', {}, h('col', { class: 's-date' }));
+    stones.forEach(() => colgroup.append(h('col', { class: 's-cubes' }), h('col', { class: 's-price' })));
+    colgroup.append(h('col', { class: 's-total' }), h('col', { class: 'c-act' }));
+
+    const tbody = h('tbody', {
+      onchange: onCellChange,
+      onclick: onRowClick,
+      onkeydown: onCellKey,
+      onfocusin: (e) => { if (e.target.classList && e.target.classList.contains('num')) e.target.select(); },
+    });
+    const table = h('table', { class: 'ledger sales' },
+      colgroup, h('thead', {}, head1, head2), tbody, h('tfoot', {}, foot));
+
+    content.append(h('div', { class: 'table-wrap' },
+      h('div', { class: 'sales-scroll' }, table),
+      h('div', { class: 'table-actions no-print' },
+        h('button', { class: 'btn primary', onclick: () => addRow() }, '+ Add row'),
+        h('button', { class: 'btn', onclick: sortByDate }, 'Sort by date'))));
+    content.append(h('div', { class: 'note no-print' },
+      'Tip: press Enter to move to the next cell; Enter in the last cell of the last row adds the next day. ' +
+      'Cubes and prices accept up to 2 decimals. Totals update automatically and everything is saved as you type.'));
+
+    /* text shown in a cell for the stored value */
+    function cellText(row, field) {
+      if (field === 'date') return row.date;
+      const [stone, part] = field.split('.');
+      const v = row.items && row.items[stone] ? row.items[stone][part] : 0;
+      return v ? (part === 'cubes' ? L.formatQty(v) : fmt(v)) : '';
+    }
+
+    function rowEl(r) {
+      const tr = h('tr', { dataset: { id: r.id } },
+        h('td', { class: 's-sticky' }, h('input', {
+          type: 'date', class: 'f-date', value: r.date, min: key + '-01', max: lastDay, 'aria-label': 'Date',
+        })));
+      stones.forEach((s, i) => {
+        ['cubes', 'price'].forEach((part) => {
+          tr.append(h('td', { class: (part === 'cubes' ? 'grp-start' : '') + alt(i) }, h('input', {
+            type: 'text', class: 'num f-cell', dataset: { field: s + '.' + part },
+            value: cellText(r, s + '.' + part), inputmode: 'decimal',
+            placeholder: part === 'cubes' ? '0' : '0.00',
+            'aria-label': s + (part === 'cubes' ? ' cubes' : ' price'), autocomplete: 'off',
+          })));
+        });
+      });
+      tr.append(
+        h('td', { class: 'num daily grp-start' }),
+        h('td', { class: 'act' }, h('button', {
+          type: 'button', class: 'row-del', title: 'Delete row', 'aria-label': 'Delete row',
+        }, '×')));
+      return tr;
+    }
+
+    function renderRows() {
+      tbody.replaceChildren();
+      if (!m.rows.length) {
+        tbody.append(h('tr', { class: 'empty-row' },
+          h('td', { colSpan: 2 * stones.length + 3 }, 'No days yet. Click “Add row” to start.')));
+      } else {
+        m.rows.forEach((r) => tbody.append(rowEl(r)));
+      }
+      refresh();
+    }
+
+    /* recalculate: daily totals, totals per stone, overall total sales */
+    function refresh() {
+      const c = Crud.getSalesSummary(state.data, key);               // src/crud/read/getSalesSummary.js
+      for (const tr of tbody.children) {
+        const cell = tr.dataset.id && tr.querySelector('td.daily');
+        if (cell) cell.textContent = fmt(c.rowTotals[tr.dataset.id]);
+      }
+      for (const s of stones) {
+        footCell[s + '.cubes'].textContent = L.formatQty(c.perStone[s].cubes);
+        footCell[s + '.price'].textContent = fmt(c.perStone[s].sales);
+      }
+      grandTotal.textContent = fmt(c.totalSales);
+    }
+
+    const findRow = (tr) => (tr && tr.dataset.id ? m.rows.find((r) => r.id === tr.dataset.id) : null);
+
+    function onCellChange(e) {
+      const input = e.target;
+      const row = findRow(input.closest('tr'));
+      if (!row) return;
+      const field = input.classList.contains('f-date') ? 'date' : input.dataset.field;
+      if (!field) return;
+      const res = Crud.updateSalesRow(state.data, key, row.id, field, input.value);   // src/crud/update/updateSalesRow.js
+      if (!res.ok) toast(res.error);
+      input.value = cellText(row, field);        // shows the cleaned value, or puts the old one back
+      if (res.ok) { refresh(); persist(); }
+    }
+
+    function onRowClick(e) {
+      const btn = e.target.closest('.row-del');
+      if (!btn) return;
+      const row = findRow(btn.closest('tr'));
+      if (!row) return;
+      const hasContent = stones.some(
+        (s) => row.items && row.items[s] && (row.items[s].cubes || row.items[s].price)
+      );
+      if (hasContent && !window.confirm('Delete the sales entered for ' + row.date + '?')) return;
+      Crud.deleteSalesRow(state.data, key, row.id);                   // src/crud/delete/deleteSalesRow.js
+      renderRows();
+      persist();
+    }
+
+    function onCellKey(e) {
+      if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+      e.preventDefault();
+      const tr = e.target.closest('tr');
+      const inputs = [...tr.querySelectorAll('input')];
+      const i = inputs.indexOf(e.target);
+      if (i < inputs.length - 1) { focusInput(inputs[i + 1]); return; }
+      e.target.blur();                                                // commits the value
+      const next = tr.nextElementSibling;
+      if (next && next.dataset.id) focusInput(next.querySelector('.f-cell'));
+      else addRow();
+    }
+
+    function addRow() {
+      const res = Crud.addSalesRow(state.data, key);                  // src/crud/create/addSalesRow.js
+      if (!res.ok) return toast(res.error);
+      renderRows();
+      persist();
+      const tr = tbody.querySelector('tr[data-id="' + res.row.id + '"]');
+      focusInput(tr && tr.querySelector('.f-cell'));
+    }
+
+    function sortByDate() {
+      Crud.sortSalesRows(state.data, key);                            // src/crud/update/sortSalesRows.js
+      renderRows();
+      persist();
+      toast('Rows sorted by date.');
+    }
+
+    renderRows();
+  }
+
+  async function exportSalesCSV(key) {
+    const res = await api.saveTextFile({
+      suggestedName: 'sales-' + key + '.csv',
+      content: '﻿' + L.salesMonthToCSV(state.data, key),
+      filters: [{ name: 'CSV (opens in Excel)', extensions: ['csv'] }],
+    });
+    if (res && res.ok) toast('Saved: ' + res.path);
+  }
+
+  function deleteSalesMonth(key) {
+    const n = state.data.sales[key].rows.length;
+    const ok = window.confirm(
+      'Delete the whole sales table for ' + L.monthLabel(key) + '?\n\n' +
+      n + ' day' + (n === 1 ? '' : 's') + ' of sales will be removed. This cannot be undone ' +
+      '(unless you restore a backup).');
+    if (!ok) return;
+    Crud.deleteSalesMonth(state.data, key);                           // src/crud/delete/deleteSalesMonth.js
+    persist();
+    renderSales();
   }
 
   /* ------------------------------------------------------------ reports */
@@ -953,7 +1219,7 @@
         rep.fuel,
         t.payments > 0
           ? Math.round((rep.fuel * 1000) / t.payments) / 10 +
-              "% of total payments"
+          "% of total payments"
           : "No payments in this period",
       ),
     );
@@ -1226,11 +1492,13 @@
   }
 
   function render() {
+    if (!state.data) return;
     document.querySelectorAll(".nav-btn").forEach((b) => {
       b.classList.toggle("active", b.dataset.view === state.view);
     });
     destroyCharts();
     if (state.view === "ledger") renderLedger();
+    else if (state.view === 'sales') renderSales();
     else if (state.view === "reports") renderReports();
     else renderSettings();
     $(".main").scrollTop = 0;

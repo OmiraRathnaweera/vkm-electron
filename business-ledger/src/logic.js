@@ -46,6 +46,9 @@
   const FUEL_CATEGORY = "Fuel";
   const REPORT_CATEGORIES = ["ABC", "Chips", "Mix", "3/4", "Dust", "6*9"];
 
+  /* Daily stone sales page: the stone types, left to right, as in the paper table. */
+  const SALES_STONES = ['ABC', 'Chips', 'Mix', '3/4', '6*9', 'Dust'];
+
   const pad = (n) => String(n).padStart(2, "0");
 
   /* ---------------------------------------------------------------- money */
@@ -84,6 +87,18 @@
     return (neg ? "-" : "") + Math.floor(abs / 100) + "." + pad(abs % 100);
   }
 
+  /**
+ * Cubic volumes are stored like money: whole numbers of hundredths (2.5 cubes -> 250),
+ * so sums never drift. Display trims trailing zeros: 250 -> "2.5", 1200 -> "12", 123456 -> "1,234.56".
+ * (Typed text is parsed with parseMoney - same rules: up to 2 decimals, no negatives.)
+ */
+  function formatQty(hundredths) {
+    const neg = hundredths < 0;
+    const abs = Math.abs(hundredths);
+    const whole = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const frac = abs % 100 ? '.' + pad(abs % 100).replace(/0$/, '') : '';
+    return (neg ? '-' : '') + whole + frac;
+  }
   /* ---------------------------------------------------------------- dates */
 
   const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -152,6 +167,7 @@
       version: 1,
       settings: { businessName: "My Business", currency: "Rs." },
       months: {},
+      sales: {},
     };
   }
 
@@ -164,11 +180,47 @@
 
     if (raw.settings && typeof raw.settings === "object") {
       if (typeof raw.settings.businessName === "string") {
-        out.settings.businessName = raw.settings.businessName.slice(0, 80);
+        out.settings.businessName =
+          raw.settings.businessName.trim().slice(0, 80) ||
+          out.settings.businessName;
       }
       if (typeof raw.settings.currency === "string") {
         out.settings.currency = raw.settings.currency.slice(0, 8);
       }
+    }
+
+    const sales = raw.sales && typeof raw.sales === "object" ? raw.sales : {};
+    for (const key of Object.keys(sales)) {
+      if (!isValidMonthKey(key)) continue;
+      const rows =
+        sales[key] && Array.isArray(sales[key].rows) ? sales[key].rows : [];
+      const seen = new Set();
+      out.sales[key] = {
+        rows: rows
+          .filter((r) => r && typeof r === "object")
+          .map((r) => {
+            const id =
+              typeof r.id === "string" && r.id && !seen.has(r.id)
+                ? r.id
+                : uid();
+            seen.add(id);
+            const items = emptySalesItems();
+            for (const s of SALES_STONES) {
+              const it = r.items && r.items[s];
+              if (it && typeof it === "object") {
+                items[s] = {
+                  cubes: toCents(it.cubes),
+                  price: toCents(it.price),
+                };
+              }
+            }
+            return {
+              id,
+              date: typeof r.date === "string" ? r.date : "",
+              items,
+            };
+          }),
+      };
     }
 
     const months =
@@ -278,6 +330,65 @@
     return bal;
   }
 
+  /* ---------------------------------------------------------- stone sales */
+
+  function emptySalesItems() {
+    const items = {};
+    for (const s of SALES_STONES) items[s] = { cubes: 0, price: 0 };
+    return items;
+  }
+
+  /**
+   * Figures for one month of stone sales.
+   *   perStone[stone] = { cubes, sales }  total cubic volume and total sales of that stone
+   *   rowTotals[id]   = daily total sales of that row (sum of its stones' prices)
+   *   totalCubes      = cubic volume of all stones together
+   *   totalSales      = overall total sales
+   */
+  function computeSalesMonth(month) {
+    const perStone = {};
+    for (const s of SALES_STONES) perStone[s] = { cubes: 0, sales: 0 };
+    const rowTotals = {};
+    let totalCubes = 0;
+    let totalSales = 0;
+    for (const r of (month && month.rows) || []) {
+      let day = 0;
+      for (const s of SALES_STONES) {
+        const it = (r.items && r.items[s]) || { cubes: 0, price: 0 };
+        perStone[s].cubes += it.cubes;
+        perStone[s].sales += it.price;
+        totalCubes += it.cubes;
+        day += it.price;
+      }
+      rowTotals[r.id] = day;
+      totalSales += day;
+    }
+    return { perStone, rowTotals, totalCubes, totalSales };
+  }
+
+  function salesMonthToCSV(data, key) {
+    const m = data.sales[key];
+    const c = computeSalesMonth(m);
+    const head = ['Date'];
+    for (const s of SALES_STONES) head.push(s + ' Cubes', s + ' Price');
+    head.push('Daily Total Sales');
+    const lines = [head];
+    for (const r of m.rows) {
+      const line = [r.date];
+      for (const s of SALES_STONES) {
+        const it = r.items[s];
+        line.push(it.cubes ? plainMoney(it.cubes) : '', it.price ? plainMoney(it.price) : '');
+      }
+      line.push(plainMoney(c.rowTotals[r.id]));
+      lines.push(line);
+    }
+    const total = ['Total'];
+    for (const s of SALES_STONES) total.push(plainMoney(c.perStone[s].cubes), plainMoney(c.perStone[s].sales));
+    total.push(plainMoney(c.totalSales));
+    lines.push(total);
+    return lines.map((l) => l.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  }
+
   /* -------------------------------------------------------------- reports */
 
   function flatRows(data) {
@@ -338,8 +449,8 @@
         const d = addDays(start, i);
         labels.push(
           ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i] +
-            " " +
-            Number(d.slice(8)),
+          " " +
+          Number(d.slice(8)),
         );
         bucketEnds.push(d);
       }
@@ -489,5 +600,10 @@
     balanceAtEndOf,
     buildReport,
     monthToCSV,
+    formatQty,
+    SALES_STONES, 
+    emptySalesItems, 
+    computeSalesMonth, 
+    salesMonthToCSV,
   };
 });
