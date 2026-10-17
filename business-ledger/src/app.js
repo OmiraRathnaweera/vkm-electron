@@ -1068,41 +1068,105 @@
 
     function previewText(rate) {
       if (!rate || rate <= 0) return 'No rate configured (0.00)';
-      return '1 cube = ' + money(rate) + ' · 2.5 cubes = ' + money(L.calculatePrice(250, rate));
+      return '1 cube = ' + money(rate) + ' · 3 cubes = ' + money(L.calculatePrice(300, rate));
     }
 
     stones.forEach((stone) => {
       const currentRate = state.data.rates[stone] || 0;
+      const currentRate3 = L.calculatePrice(300, currentRate);
       const previewEl = h('div', { class: 'rate-preview' }, previewText(currentRate));
-      const inputEl = h('input', {
+
+      const input1El = h('input', {
         type: 'text',
-        class: 'field rate-input',
+        class: 'field rate-input rate-input-1',
         inputmode: 'decimal',
         placeholder: '0.00',
         value: currentRate ? fmt(currentRate) : '',
-        'aria-label': stone + ' price per cube',
+        'aria-label': stone + ' rate per 1 cube',
         onfocus: (e) => e.target.select(),
         onchange: (e) => {
-          const res = Crud.updateRates(state.data, stone, e.target.value);
+          const val = e.target.value.trim();
+          const cents1 = val === '' ? 0 : L.parseMoney(val);
+          if (cents1 === null || cents1 < 0) {
+            toast('Enter a valid price per 1 cube (e.g. 1500 or 1,500.00).');
+            const oldRate = state.data.rates[stone] || 0;
+            e.target.value = oldRate ? fmt(oldRate) : '';
+            return;
+          }
+          const res = Crud.updateRates(state.data, stone, cents1);
           if (!res.ok) {
             toast(res.error);
-          } else {
-            persist();
+            return;
           }
-          const val = state.data.rates[stone] || 0;
-          e.target.value = val ? fmt(val) : '';
-          previewEl.textContent = previewText(val);
+          persist();
+          const updatedRate = state.data.rates[stone] || 0;
+          const updatedRate3 = L.calculatePrice(300, updatedRate);
+          input1El.value = updatedRate ? fmt(updatedRate) : '';
+          input3El.value = updatedRate3 ? fmt(updatedRate3) : '';
+          previewEl.textContent = previewText(updatedRate);
+        },
+      });
+
+      const input3El = h('input', {
+        type: 'text',
+        class: 'field rate-input rate-input-3',
+        inputmode: 'decimal',
+        placeholder: '0.00',
+        value: currentRate3 ? fmt(currentRate3) : '',
+        'aria-label': stone + ' price for 3 cubes',
+        onfocus: (e) => e.target.select(),
+        onchange: (e) => {
+          const val = e.target.value.trim();
+          const cents3 = val === '' ? 0 : L.parseMoney(val);
+          if (cents3 === null || cents3 < 0) {
+            toast('Enter a valid price for 3 cubes (e.g. 4500 or 4,500.00).');
+            const oldRate = state.data.rates[stone] || 0;
+            const oldRate3 = L.calculatePrice(300, oldRate);
+            e.target.value = oldRate3 ? fmt(oldRate3) : '';
+            return;
+          }
+          // Derive rate per 1 cube by dividing 3 cubes price by 3
+          const cents1 = Math.round(cents3 / 3);
+          const res = Crud.updateRates(state.data, stone, cents1);
+          if (!res.ok) {
+            toast(res.error);
+            return;
+          }
+          persist();
+          const updatedRate = state.data.rates[stone] || 0;
+          const updatedRate3 = L.calculatePrice(300, updatedRate);
+          input1El.value = updatedRate ? fmt(updatedRate) : '';
+          input3El.value = updatedRate3 ? fmt(updatedRate3) : '';
+          previewEl.textContent = previewText(updatedRate);
         },
       });
 
       const card = h('div', { class: 'rate-card' },
         h('div', { class: 'rate-card-head' },
           h('span', { class: 'rate-stone-name' }, stone),
-          h('span', { class: 'rate-badge' }, 'Per Cube')
+          h('span', { class: 'rate-badge' }, 'Most sold: 3 Cubes')
         ),
-        h('div', { class: 'rate-input-wrap' },
-          h('span', { class: 'rate-cur' }, cur() || 'Rs.'),
-          inputEl
+        h('div', { class: 'rate-fields' },
+          h('div', { class: 'rate-field-group' },
+            h('label', { class: 'rate-field-label' },
+              h('span', {}, 'Rate per 1 Cube'),
+              h('span', { class: 'rate-field-tag' }, '1 Cube')
+            ),
+            h('div', { class: 'rate-input-wrap' },
+              h('span', { class: 'rate-cur' }, cur() || 'Rs.'),
+              input1El
+            )
+          ),
+          h('div', { class: 'rate-field-group' },
+            h('label', { class: 'rate-field-label' },
+              h('span', {}, 'Price for 3 Cubes'),
+              h('span', { class: 'rate-field-tag highlight' }, '3 Cubes')
+            ),
+            h('div', { class: 'rate-input-wrap' },
+              h('span', { class: 'rate-cur' }, cur() || 'Rs.'),
+              input3El
+            )
+          )
         ),
         previewEl
       );

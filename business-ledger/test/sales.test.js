@@ -203,4 +203,16 @@ test('buildReport aggregates daily stone sales data', () => {
   assert.equal(rep.stoneSales.revenueTrend[2], 65000);
 });
 
+test('3 cubes price calculation and rate synchronization', () => {
+  // 1 cube rate = Rs. 12,000.00 (1,200,000 cents) -> 3 cubes price = Rs. 36,000.00 (3,600,000 cents)
+  const rate1 = 1200000;
+  const price3 = L.calculatePrice(300, rate1);
+  assert.equal(price3, 3600000);
 
+  // Deriving 1 cube rate from 3 cubes price:
+  // e.g. Rs. 45,000.00 for 3 cubes (4,500,000 cents) / 3 = 1,500,000 cents (Rs. 15,000.00 / cube)
+  const price3Input = 4500000;
+  const derivedRate1 = Math.round(price3Input / 3);
+  assert.equal(derivedRate1, 1500000);
+  assert.equal(L.calculatePrice(300, derivedRate1), 4500000);
+});
