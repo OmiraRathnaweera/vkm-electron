@@ -11,13 +11,15 @@
   "use strict";
 
   /**
-   * Update the price-per-cube standard rate for stone categories.
+   * Update the price standard rate for stone categories.
    * Can accept:
-   *   updateRates(data, 'Chips', '2500')
-   *   updateRates(data, { 'Chips': '2500', 'Dust': 120000 })
+   *   updateRates(data, 'Chips', '36000', true)   // price for 3 cubes
+   *   updateRates(data, 'Chips', '12000')         // price per 1 cube
+   *   updateRates(data, { 'Chips': '36000' }, true)
    */
-  return function updateRates(data, stoneOrMap, rateInput) {
+  return function updateRates(data, stoneOrMap, rateInput, isThreeCubes) {
     data.rates = data.rates || L.emptyRates();
+    data.rates3 = data.rates3 || L.emptyRates();
 
     if (typeof stoneOrMap === "object" && stoneOrMap !== null) {
       for (var s in stoneOrMap) {
@@ -27,11 +29,17 @@
               ? stoneOrMap[s]
               : L.parseMoney(stoneOrMap[s]);
           if (val !== null && val >= 0) {
-            data.rates[s] = val;
+            if (isThreeCubes) {
+              data.rates3[s] = val;
+              data.rates[s] = Math.round(val / 3);
+            } else {
+              data.rates[s] = val;
+              data.rates3[s] = L.calculatePrice(300, val);
+            }
           }
         }
       }
-      return { ok: true, rates: data.rates };
+      return { ok: true, rates: data.rates, rates3: data.rates3 };
     }
 
     var stone = String(stoneOrMap);
@@ -44,11 +52,20 @@
     if (cents === null || cents < 0) {
       return {
         ok: false,
-        error: "Enter a valid price per cube (e.g. 2500 or 2,500.00).",
+        error: isThreeCubes
+          ? "Enter a valid price for 3 cubes (e.g. 36000 or 36,000.00)."
+          : "Enter a valid price per cube (e.g. 2500 or 2,500.00).",
       };
     }
 
-    data.rates[stone] = cents;
-    return { ok: true, stone: stone, rate: cents };
+    if (isThreeCubes) {
+      data.rates3[stone] = cents;
+      data.rates[stone] = Math.round(cents / 3);
+      return { ok: true, stone: stone, rate: data.rates[stone], rate3: cents };
+    } else {
+      data.rates[stone] = cents;
+      data.rates3[stone] = L.calculatePrice(300, cents);
+      return { ok: true, stone: stone, rate: cents, rate3: data.rates3[stone] };
+    }
   };
 });

@@ -165,6 +165,7 @@
       version: 1,
       settings: { businessName: "My Business", currency: "Rs." },
       rates: emptyRates(),
+      rates3: emptyRates(),
       months: {},
       sales: {},
     };
@@ -189,11 +190,22 @@
     }
 
     out.rates = emptyRates();
+    out.rates3 = emptyRates();
     const rawRates =
       raw.rates && typeof raw.rates === "object" ? raw.rates : {};
+    const rawRates3 =
+      raw.rates3 && typeof raw.rates3 === "object" ? raw.rates3 : {};
     for (const s of SALES_STONES) {
+      if (rawRates3[s] !== undefined) {
+        out.rates3[s] = toCents(rawRates3[s]);
+      }
       if (rawRates[s] !== undefined) {
         out.rates[s] = toCents(rawRates[s]);
+      } else if (out.rates3[s]) {
+        out.rates[s] = Math.round(out.rates3[s] / 3);
+      }
+      if (!out.rates3[s] && out.rates[s]) {
+        out.rates3[s] = calculatePrice(300, out.rates[s]);
       }
     }
 
@@ -350,10 +362,18 @@
    * Calculate total price from cubic volume (in hundredths) and price-per-cube rate (in cents).
    * Result is returned in cents.
    * e.g. 2.5 cubes (250) at Rs. 2,000/cube (200,000 cents) -> 500,000 cents (Rs. 5,000.00).
+   * Optional rate3Cents provides exact pricing for standard 3-cube loads.
    */
-  function calculatePrice(cubesHundredths, rateCents) {
+  function calculatePrice(cubesHundredths, rateCents, rate3Cents) {
     if (!Number.isSafeInteger(cubesHundredths) || cubesHundredths <= 0) return 0;
-    if (!Number.isSafeInteger(rateCents) || rateCents <= 0) return 0;
+    if (rate3Cents && rate3Cents > 0) {
+      if (cubesHundredths === 300) return rate3Cents;
+      if (cubesHundredths % 300 === 0) return (cubesHundredths / 300) * rate3Cents;
+    }
+    if (!Number.isSafeInteger(rateCents) || rateCents <= 0) {
+      if (rate3Cents && rate3Cents > 0) rateCents = Math.round(rate3Cents / 3);
+      else return 0;
+    }
     return Math.round((cubesHundredths * rateCents) / 100);
   }
 

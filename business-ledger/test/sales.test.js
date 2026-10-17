@@ -214,5 +214,24 @@ test('3 cubes price calculation and rate synchronization', () => {
   const price3Input = 4500000;
   const derivedRate1 = Math.round(price3Input / 3);
   assert.equal(derivedRate1, 1500000);
-  assert.equal(L.calculatePrice(300, derivedRate1), 4500000);
+  assert.equal(L.calculatePrice(300, derivedRate1, price3Input), 4500000);
+
+  // updateRates with isThreeCubes = true
+  const data = L.defaultData();
+  const uRes = updateRates(data, 'Chips', '36,000.00', true);
+  assert.ok(uRes.ok);
+  assert.equal(data.rates3.Chips, 3600000);
+  assert.equal(data.rates.Chips, 1200000);
+
+  // exact 3 cubes and 6 cubes calculations
+  assert.equal(L.calculatePrice(300, data.rates.Chips, data.rates3.Chips), 3600000);
+  assert.equal(L.calculatePrice(600, data.rates.Chips, data.rates3.Chips), 7200000);
+
+  // normalization populates both
+  const norm = L.normalizeData({
+    rates3: { 'ABC': 3000000 },
+  });
+  assert.equal(norm.rates3.ABC, 3000000);
+  assert.equal(norm.rates.ABC, 1000000);
 });
+
