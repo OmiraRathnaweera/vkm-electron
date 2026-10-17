@@ -162,10 +162,17 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
   }
 
+  function emptyRates() {
+    const rates = {};
+    for (const s of SALES_STONES) rates[s] = 0;
+    return rates;
+  }
+
   function defaultData() {
     return {
       version: 1,
       settings: { businessName: "My Business", currency: "Rs." },
+      rates: emptyRates(),
       months: {},
       sales: {},
     };
@@ -186,6 +193,15 @@
       }
       if (typeof raw.settings.currency === "string") {
         out.settings.currency = raw.settings.currency.slice(0, 8);
+      }
+    }
+
+    out.rates = emptyRates();
+    const rawRates =
+      raw.rates && typeof raw.rates === "object" ? raw.rates : {};
+    for (const s of SALES_STONES) {
+      if (rawRates[s] !== undefined) {
+        out.rates[s] = toCents(rawRates[s]);
       }
     }
 
@@ -336,6 +352,17 @@
     const items = {};
     for (const s of SALES_STONES) items[s] = { cubes: 0, price: 0 };
     return items;
+  }
+
+  /**
+   * Calculate total price from cubic volume (in hundredths) and price-per-cube rate (in cents).
+   * Result is returned in cents.
+   * e.g. 2.5 cubes (250) at Rs. 2,000/cube (200,000 cents) -> 500,000 cents (Rs. 5,000.00).
+   */
+  function calculatePrice(cubesHundredths, rateCents) {
+    if (!Number.isSafeInteger(cubesHundredths) || cubesHundredths <= 0) return 0;
+    if (!Number.isSafeInteger(rateCents) || rateCents <= 0) return 0;
+    return Math.round((cubesHundredths * rateCents) / 100);
   }
 
   /**
@@ -603,6 +630,8 @@
     formatQty,
     SALES_STONES, 
     emptySalesItems, 
+    emptyRates,
+    calculatePrice,
     computeSalesMonth, 
     salesMonthToCSV,
   };

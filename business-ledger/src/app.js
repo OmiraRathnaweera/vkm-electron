@@ -895,8 +895,13 @@
         h('button', { class: 'btn primary', onclick: () => addRow() }, '+ Add row'),
         h('button', { class: 'btn', onclick: sortByDate }, 'Sort by date'))));
     content.append(h('div', { class: 'note no-print' },
-      'Tip: press Enter to move to the next cell; Enter in the last cell of the last row adds the next day. ' +
-      'Cubes and prices accept up to 2 decimals. Totals update automatically and everything is saved as you type.'));
+      'Tip: press Enter to move to the next cell. Entering cubes auto-calculates the price based on ',
+      h('a', {
+        href: '#',
+        onclick: (e) => { e.preventDefault(); state.view = 'prices'; render(); },
+        style: 'color: var(--accent); text-decoration: underline;',
+      }, 'Stone prices'),
+      ' (you can still override prices manually). Everything is saved as you type.'));
 
     /* text shown in a cell for the stored value */
     function cellText(row, field) {
@@ -958,14 +963,28 @@
 
     function onCellChange(e) {
       const input = e.target;
-      const row = findRow(input.closest('tr'));
+      const tr = input.closest('tr');
+      const row = findRow(tr);
       if (!row) return;
       const field = input.classList.contains('f-date') ? 'date' : input.dataset.field;
       if (!field) return;
       const res = Crud.updateSalesRow(state.data, key, row.id, field, input.value);   // src/crud/update/updateSalesRow.js
       if (!res.ok) toast(res.error);
       input.value = cellText(row, field);        // shows the cleaned value, or puts the old one back
-      if (res.ok) { refresh(); persist(); }
+      if (res.ok) {
+        if (field.endsWith('.cubes')) {
+          const stone = field.split('.')[0];
+          const rate = state.data.rates && state.data.rates[stone];
+          if (rate && rate > 0) {
+            const calculatedPrice = L.calculatePrice(res.value, rate);
+            row.items[stone].price = calculatedPrice;
+            const priceInput = tr && tr.querySelector('input[data-field="' + stone + '.price"]');
+            if (priceInput) priceInput.value = cellText(row, stone + '.price');
+          }
+        }
+        refresh();
+        persist();
+      }
     }
 
     function onRowClick(e) {
@@ -1033,6 +1052,73 @@
     Crud.deleteSalesMonth(state.data, key);                           // src/crud/delete/deleteSalesMonth.js
     persist();
     renderSales();
+  }
+
+  /* -------------------------------------------------------- stone prices */
+
+  function renderPrices() {
+    const root = $('#view');
+    root.replaceChildren();
+    const page = Fragments.create('Pages/prices');
+    root.append(page);
+
+    const container = slot(page, 'rates-list');
+    const stones = L.SALES_STONES;
+    state.data.rates = state.data.rates || L.emptyRates();
+
+    function previewText(rate) {
+      if (!rate || rate <= 0) return 'No rate configured (0.00)';
+      return '1 cube = ' + money(rate) + ' · 2.5 cubes = ' + money(L.calculatePrice(250, rate));
+    }
+
+    stones.forEach((stone) => {
+      const currentRate = state.data.rates[stone] || 0;
+      const previewEl = h('div', { class: 'rate-preview' }, previewText(currentRate));
+      const inputEl = h('input', {
+        type: 'text',
+        class: 'field rate-input',
+        inputmode: 'decimal',
+        placeholder: '0.00',
+        value: currentRate ? fmt(currentRate) : '',
+        'aria-label': stone + ' price per cube',
+        onfocus: (e) => e.target.select(),
+        onchange: (e) => {
+          const res = Crud.updateRates(state.data, stone, e.target.value);
+          if (!res.ok) {
+            toast(res.error);
+          } else {
+            persist();
+          }
+          const val = state.data.rates[stone] || 0;
+          e.target.value = val ? fmt(val) : '';
+          previewEl.textContent = previewText(val);
+        },
+      });
+
+      const card = h('div', { class: 'rate-card' },
+        h('div', { class: 'rate-card-head' },
+          h('span', { class: 'rate-stone-name' }, stone),
+          h('span', { class: 'rate-badge' }, 'Per Cube')
+        ),
+        h('div', { class: 'rate-input-wrap' },
+          h('span', { class: 'rate-cur' }, cur() || 'Rs.'),
+          inputEl
+        ),
+        previewEl
+      );
+
+      container.append(card);
+    });
+
+    slot(page, 'save-btn').addEventListener('click', () => {
+      persist();
+      toast('All stone prices saved.');
+    });
+
+    slot(page, 'sales-btn').addEventListener('click', () => {
+      state.view = 'sales';
+      render();
+    });
   }
 
   /* ------------------------------------------------------------ reports */
@@ -1499,6 +1585,7 @@
     destroyCharts();
     if (state.view === "ledger") renderLedger();
     else if (state.view === 'sales') renderSales();
+    else if (state.view === 'prices') renderPrices();
     else if (state.view === "reports") renderReports();
     else renderSettings();
     $(".main").scrollTop = 0;

@@ -10,6 +10,8 @@ const updateSalesRow = require('../src/crud/update/updateSalesRow.js');
 const sortSalesRows = require('../src/crud/update/sortSalesRows.js');
 const deleteSalesRow = require('../src/crud/delete/deleteSalesRow.js');
 const deleteSalesMonth = require('../src/crud/delete/deleteSalesMonth.js');
+const updateRates = require('../src/crud/update/updateRates.js');
+const getRates = require('../src/crud/read/getRates.js');
 
 test('formatQty: cubic volume formatting', () => {
   assert.equal(L.formatQty(0), '0');
@@ -115,3 +117,47 @@ test('normalizeData preserves and cleans sales data', () => {
   assert.equal(normalized.sales['2026-10'].rows[0].items.Chips.price, 50000);
   assert.equal(normalized.sales['2026-10'].rows[0].items.ABC.cubes, 0);
 });
+
+test('calculatePrice: cubes × price per cube rate', () => {
+  // 2.5 cubes (250 hundredths) @ Rs. 2,000.00/cube (200,000 cents) = 500,000 cents (Rs. 5,000.00)
+  assert.equal(L.calculatePrice(250, 200000), 500000);
+  // 1 cube (100 hundredths) @ Rs. 1,500.00 (150,000 cents) = 150,000 cents
+  assert.equal(L.calculatePrice(100, 150000), 150000);
+  // 0 cubes or 0 rate -> 0
+  assert.equal(L.calculatePrice(0, 200000), 0);
+  assert.equal(L.calculatePrice(250, 0), 0);
+  assert.equal(L.calculatePrice(-50, 100000), 0);
+});
+
+test('rates CRUD and normalization', () => {
+  const data = L.defaultData();
+  assert.deepEqual(getRates(data), L.emptyRates());
+
+  // single update
+  const u1 = updateRates(data, 'Chips', '2,500');
+  assert.ok(u1.ok);
+  assert.equal(data.rates.Chips, 250000);
+
+  // batch update
+  const u2 = updateRates(data, { 'ABC': '1800', 'Dust': 120000 });
+  assert.ok(u2.ok);
+  assert.equal(data.rates.ABC, 180000);
+  assert.equal(data.rates.Dust, 120000);
+
+  // invalid stone rejected
+  const uBad = updateRates(data, 'Granite', '500');
+  assert.ok(!uBad.ok);
+
+  // normalization cleans bad rates
+  const norm = L.normalizeData({
+    rates: {
+      'Chips': 250000,
+      'ABC': -100,
+      'Invalid': 50000,
+    },
+  });
+  assert.equal(norm.rates.Chips, 250000);
+  assert.equal(norm.rates.ABC, 0); // negative rejected to 0
+  assert.equal(norm.rates.Invalid, undefined);
+});
+
