@@ -161,3 +161,46 @@ test('rates CRUD and normalization', () => {
   assert.equal(norm.rates.Invalid, undefined);
 });
 
+test('categories dropdown contains only Fuel and Others', () => {
+  assert.deepEqual(L.CATEGORIES, ['Fuel', 'Others']);
+  assert.equal(L.DEFAULT_CATEGORY, 'Others');
+  assert.ok(L.isValidCategory('Fuel'));
+  assert.ok(L.isValidCategory('Others'));
+  assert.ok(!L.isValidCategory('ABC'));
+  assert.ok(!L.isValidCategory('3/4'));
+
+  // legacy stone category on ledger row normalizes to Others
+  const norm = L.normalizeData({
+    months: {
+      '2026-10': {
+        rows: [{ id: '1', date: '2026-10-01', category: 'ABC', receipt: 1000 }],
+      },
+    },
+  });
+  assert.equal(norm.months['2026-10'].rows[0].category, 'Others');
+});
+
+test('buildReport aggregates daily stone sales data', () => {
+  const data = L.defaultData();
+  addSalesMonth(data, '2026-10');
+  const addRes = addSalesRow(data, '2026-10', { date: '2026-10-03' });
+  assert.ok(addRes.ok);
+
+  updateSalesRow(data, '2026-10', addRes.row.id, 'Chips.cubes', '2.5');
+  updateSalesRow(data, '2026-10', addRes.row.id, 'Chips.price', '500');
+  updateSalesRow(data, '2026-10', addRes.row.id, 'Dust.cubes', '1.0');
+  updateSalesRow(data, '2026-10', addRes.row.id, 'Dust.price', '150');
+
+  const rep = L.buildReport(data, 'month', '2026-10');
+  assert.equal(rep.stoneSales.count, 1);
+  assert.equal(rep.stoneSales.totalRevenue, 65000); // 50000 + 15000
+  assert.equal(rep.stoneSales.totalCubes, 350); // 250 + 100
+  assert.equal(rep.stoneSales.perStone.Chips.revenue, 50000);
+  assert.equal(rep.stoneSales.perStone.Chips.cubes, 250);
+  assert.equal(rep.stoneSales.perStone.Dust.revenue, 15000);
+  assert.equal(rep.stoneSales.perStone.Dust.cubes, 100);
+  // Day 3 (index 2 in 1-based month day array)
+  assert.equal(rep.stoneSales.revenueTrend[2], 65000);
+});
+
+

@@ -366,6 +366,16 @@ input.field {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.cards.cols-6 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (min-width: 1200px) {
+  .cards.cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
 .chart-tools {
   margin: -2px 0 10px;
 }
@@ -721,7 +731,8 @@ code.path {
 @media (max-width: 1100px) {
 
   .cards,
-  .cards.cols-5 {
+  .cards.cols-5,
+  .cards.cols-6 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -997,13 +1008,15 @@ table.ledger.sales {
   }
 
   /* Reports page on A4: compact cards (3 per row) and shorter charts so more fits on each page. */
-  .cards.cols-5 {
+  .cards.cols-5,
+  .cards.cols-6 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 12px;
   }
 
-  .cards.cols-5 .card:last-child:nth-child(odd) {
+  .cards.cols-5 .card:last-child:nth-child(odd),
+  .cards.cols-6 .card:last-child:nth-child(odd) {
     grid-column: auto;
   }
 

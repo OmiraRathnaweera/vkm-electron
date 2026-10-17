@@ -27,24 +27,16 @@
   ];
   const MONTH_SHORT = MONTH_NAMES.map((m) => m.slice(0, 3));
 
-  /* Row categories shown in the dropdown next to "Description".
-     Edit this list to add / rename / reorder options. The first match wins,
-     DEFAULT_CATEGORY is used for new rows and for old rows saved before this existed. */
+  /* Row categories shown in the dropdown next to "Description" in the ledger. */
   const CATEGORIES = [
     "Fuel",
-    "ABC",
-    "3/4",
-    "Chips",
-    "Dust",
-    "Mix",
-    "6*9",
     "Others",
   ];
   const DEFAULT_CATEGORY = "Others";
   const isValidCategory = (c) => CATEGORIES.indexOf(c) !== -1;
-  /* Reports page: Fuel gets its own "expenditure" figure; the category charts (pie and bar) cover these six. */
+  /* Reports page: Fuel expenditure figure. */
   const FUEL_CATEGORY = "Fuel";
-  const REPORT_CATEGORIES = ["ABC", "Chips", "Mix", "3/4", "Dust", "6*9"];
+  const REPORT_CATEGORIES = ["Fuel", "Others"];
 
   /* Daily stone sales page: the stone types, left to right, as in the paper table. */
   const SALES_STONES = ['ABC', 'Chips', 'Mix', '3/4', '6*9', 'Dust'];
@@ -536,6 +528,46 @@
     const closing = balanceAtEndOf(data, computed, end);
     const balance = bucketEnds.map((d) => balanceAtEndOf(data, computed, d));
 
+    // Daily stone sales figures for the period
+    const stoneSales = {};
+    for (const s of SALES_STONES) {
+      stoneSales[s] = { cubes: 0, revenue: 0 };
+    }
+    let totalStoneSales = 0;
+    let totalStoneCubes = 0;
+    let salesCount = 0;
+    const stoneSalesTrend = labels.map(() => 0);
+    const stoneCubesTrend = labels.map(() => 0);
+
+    const salesData = (data && data.sales) || {};
+    for (const monthKey of Object.keys(salesData)) {
+      const sMonth = salesData[monthKey];
+      if (!sMonth || !Array.isArray(sMonth.rows)) continue;
+      for (const r of sMonth.rows) {
+        if (!r || typeof r !== "object" || !r.date) continue;
+        if (r.date >= start && r.date <= end) {
+          salesCount++;
+          let dayRevenue = 0;
+          let dayCubes = 0;
+          for (const s of SALES_STONES) {
+            const it = (r.items && r.items[s]) || { cubes: 0, price: 0 };
+            stoneSales[s].cubes += it.cubes;
+            stoneSales[s].revenue += it.price;
+            dayRevenue += it.price;
+            dayCubes += it.cubes;
+          }
+          totalStoneSales += dayRevenue;
+          totalStoneCubes += dayCubes;
+
+          const idx = bucketOf(r.date);
+          if (idx >= 0 && idx < labels.length) {
+            stoneSalesTrend[idx] += dayRevenue;
+            stoneCubesTrend[idx] += dayCubes;
+          }
+        }
+      }
+    }
+
     return {
       period,
       anchor,
@@ -558,6 +590,14 @@
       fuel: byCategory[FUEL_CATEGORY].payments, // total spent on fuel in the period
       receiptSources: topN(groupByDescription(inRange, "receipt"), 6),
       paymentSources: topN(groupByDescription(inRange, "payment"), 6),
+      stoneSales: {
+        perStone: stoneSales,
+        totalRevenue: totalStoneSales,
+        totalCubes: totalStoneCubes,
+        revenueTrend: stoneSalesTrend,
+        cubesTrend: stoneCubesTrend,
+        count: salesCount,
+      },
     };
   }
 

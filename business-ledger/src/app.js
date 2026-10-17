@@ -1308,8 +1308,14 @@
           "% of total payments"
           : "No payments in this period",
       ),
+      card(
+        "Daily stone sales",
+        "receipts",
+        rep.stoneSales.totalRevenue,
+        L.formatQty(rep.stoneSales.totalCubes) + " cubes sold in this period",
+      ),
     );
-    slot(page, "cards").classList.add("cols-5");
+    slot(page, "cards").classList.add("cols-6");
 
     const grid = slot(page, "charts");
 
@@ -1491,27 +1497,126 @@
       [cssVar("--receipt"), cssVar("--payment")],
     );
 
-    /* 3. Category income (ABC, Chips, Mix, 3/4, Dust, 6*9) */
-    const catIncomeValues = L.REPORT_CATEGORIES.map(
-      (c) => rep.byCategory[c].receipts,
-    );
-
-    /* 3a. pie: Income by category */
+    /* 3. pie: Payments by category (Fuel vs Others) */
     pieChart(
-      "Income by category",
-      L.REPORT_CATEGORIES,
-      catIncomeValues,
+      "Payments by category",
+      ["Fuel", "Others"],
+      [
+        rep.byCategory.Fuel ? rep.byCategory.Fuel.payments : 0,
+        rep.byCategory.Others ? rep.byCategory.Others.payments : 0,
+      ],
+      [SOURCE_COLORS[1], SOURCE_COLORS[4]],
+    );
+
+    /* 4. Daily stone sales revenue trend (wide bar chart) */
+    const hasSalesData =
+      rep.stoneSales &&
+      rep.stoneSales.count > 0 &&
+      rep.stoneSales.totalRevenue > 0;
+    {
+      const { canvas, box } = chartCard(
+        "Daily stone sales revenue by " + unit,
+        true,
+      );
+      if (!hasSalesData) {
+        emptyNote(box, "No stone sales recorded in this period");
+      } else {
+        state.charts.push(
+          new window.Chart(canvas, {
+            type: "bar",
+            data: {
+              labels: rep.labels,
+              datasets: [
+                {
+                  label: "Daily stone sales",
+                  data: rep.stoneSales.revenueTrend.map((c) => c / 100),
+                  backgroundColor: "#1f8a70",
+                  borderRadius: 3,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: (c) => " Sales: " + tipMoney(c.parsed.y),
+                  },
+                },
+              },
+              scales: {
+                y: { beginAtZero: true, ticks: { callback: axisMoney } },
+                x: { grid: { display: false } },
+              },
+            },
+          }),
+        );
+      }
+    }
+
+    /* 5. Stone sales revenue breakdown by stone type (pie chart) */
+    const stoneRevenueValues = L.SALES_STONES.map(
+      (s) => rep.stoneSales.perStone[s].revenue,
+    );
+    pieChart(
+      "Stone sales revenue by type",
+      L.SALES_STONES,
+      stoneRevenueValues,
       SOURCE_COLORS.slice(0, 6),
     );
 
-    /* 3b. bar: Income by category */
-    categoryBarChart(
-      "Income by category",
-      L.REPORT_CATEGORIES,
-      catIncomeValues,
-      SOURCE_COLORS.slice(0, 6),
-      true,
+    /* 6. Stone volume sold in cubes (bar chart) */
+    const stoneCubesValues = L.SALES_STONES.map(
+      (s) => rep.stoneSales.perStone[s].cubes / 100,
     );
+    {
+      const { canvas, box } = chartCard("Stone sales volume (cubes)", false);
+      if (!stoneCubesValues.some((v) => v > 0)) {
+        emptyNote(box, "No stone volume recorded in this period");
+      } else {
+        state.charts.push(
+          new window.Chart(canvas, {
+            type: "bar",
+            data: {
+              labels: L.SALES_STONES,
+              datasets: [
+                {
+                  label: "Volume (cubes)",
+                  data: stoneCubesValues,
+                  backgroundColor: SOURCE_COLORS.slice(0, 6),
+                  borderRadius: 4,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: (c) =>
+                      " " +
+                      L.formatQty(Math.round(c.parsed.y * 100)) +
+                      " cubes",
+                  },
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: (v) => L.formatQty(Math.round(v * 100)),
+                  },
+                },
+                x: { grid: { display: false } },
+              },
+            },
+          }),
+        );
+      }
+    }
   }
 
   /* ----------------------------------------------------------- settings */
